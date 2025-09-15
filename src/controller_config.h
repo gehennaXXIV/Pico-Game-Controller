@@ -21,12 +21,12 @@
 const uint8_t SW_KEYCODE[] = {HID_KEY_D, HID_KEY_F, HID_KEY_J, HID_KEY_K,
                               HID_KEY_C, HID_KEY_M, HID_KEY_1, HID_KEY_G};
 const uint8_t SW_GPIO[] = {
-    GP13, GP11, GP9, GP7, GP12, GP8, GP0, GP10,
+    13, 11, 9, 7, 12, 8, 0, 10,
 };
 // const uint8_t LED_GPIO[] = {
 //      5, 7, 9, 11, 13, 15, 17, 19, 21, 26,
 //  };
-const uint8_t ENC_GPIO[] = {GP15, GP5};      // L_ENC(0, 1); R_ENC(2, 3)
+const uint8_t ENC_GPIO[] = {15, 5};      // L_ENC(0, 1); R_ENC(2, 3)
 const bool ENC_REV[] = {false, false};  // Reverse Encoders
 // const uint8_t WS2812B_GPIO = 28;
 
