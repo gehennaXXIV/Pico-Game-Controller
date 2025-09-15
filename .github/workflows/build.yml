@@ -12,7 +12,25 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          submodules: true   # fetch submodules too
+          submodules: true
+
+      # Cache Pico SDK
+      - name: Cache Pico SDK
+        uses: actions/cache@v3
+        with:
+          path: pico-sdk
+          key: pico-sdk-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            pico-sdk-${{ runner.os }}-
+
+      # Cache ARM toolchain
+      - name: Cache ARM toolchain
+        uses: actions/cache@v3
+        with:
+          path: ~/.arm-none-eabi
+          key: arm-toolchain-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            arm-toolchain-${{ runner.os }}-
 
       - name: Install dependencies
         run: |
@@ -26,7 +44,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          mkdir build
+          mkdir -p build
           cd build
           cmake .. -DPICO_SDK_PATH=$PICO_SDK_PATH
 
@@ -35,8 +53,13 @@ jobs:
           cd build
           make -j$(nproc)
 
+      - name: Convert ELF to UF2
+        run: |
+          cd build
+          elf2uf2 src/Pico_Game_Controller.elf src/Pico_Game_Controller.uf2
+
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
           name: pico-game-controller
-          path: build/*.uf2
+          path: build/src/Pico_Game_Controller.uf2
