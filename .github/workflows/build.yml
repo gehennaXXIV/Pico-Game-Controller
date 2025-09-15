@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -17,31 +18,31 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y cmake gcc-arm-none-eabi build-essential python3
+          sudo apt install -y cmake gcc-arm-none-eabi build-essential python3 git
 
-      - name: Get Pico SDK
+      - name: Set up Pico SDK
         run: |
           git clone --recurse-submodules --depth 1 https://github.com/raspberrypi/pico-sdk
           echo "PICO_SDK_PATH=$PWD/pico-sdk" >> $GITHUB_ENV
 
-      - name: Configure CMake
+      - name: Configure project with CMake
         run: |
-          mkdir build
+          mkdir -p build
           cd build
           cmake .. -DPICO_SDK_PATH=$PICO_SDK_PATH
 
       - name: Build firmware
         run: |
           cd build
-          make -j$(nproc)
+          cmake --build . --target all -- -j$(nproc)
 
       - name: Convert ELF to UF2
         run: |
           cd build
-          $PICO_SDK_PATH/tools/elf2uf2/elf2uf2 src/Pico_Game_Controller.elf src/Pico_Game_Controller.uf2
+          cmake --build . --target Pico_Game_Controller.uf2
 
-      - name: Upload firmware artifact
+      - name: Upload UF2 artifact
         uses: actions/upload-artifact@v4
         with:
           name: pico-game-controller
-          path: build/src/Pico_Game_Controller.uf2
+          path: build/Pico_Game_Controller.uf2
