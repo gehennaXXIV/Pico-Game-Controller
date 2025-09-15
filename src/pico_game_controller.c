@@ -1,3 +1,5 @@
+#define PICO_GAME_CONTROLLER_C
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
