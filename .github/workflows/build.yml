@@ -1,0 +1,40 @@
+name: Build Pico-Game-Controller
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake gcc-arm-none-eabi build-essential python3
+
+      - name: Get Pico SDK
+        run: |
+          git clone --depth 1 https://github.com/raspberrypi/pico-sdk
+          echo "PICO_SDK_PATH=$PWD/pico-sdk" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Build firmware
+        run: |
+          cd build
+          make -j$(nproc)
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pico-game-controller
+          path: build/*.uf2

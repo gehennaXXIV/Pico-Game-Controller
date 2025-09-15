@@ -21,7 +21,7 @@
 #include "usb_descriptors.h"
 // clang-format off
 #include "debounce/debounce_include.h"
-#include "rgb/rgb_include.h"
+// #include "rgb/rgb_include.h"
 // clang-format on
 
 PIO pio, pio_1;
@@ -37,7 +37,7 @@ bool kbm_report;
 
 uint64_t reactive_timeout_timestamp;
 
-void (*ws2812b_mode)();
+// void (*ws2812b_mode)();
 void (*loop_mode)();
 void (*debounce_mode)();
 bool joy_mode_check = true;
@@ -54,19 +54,19 @@ union {
  * WS2812B Lighting
  * @param counter Current number of WS2812B cycles
  **/
-void ws2812b_update(uint32_t counter) {
-  if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
-    ws2812b_mode(counter);
-  } else {
-    for (int i = 0; i < WS2812B_LED_ZONES; i++) {
-      for (int j = 0; j < WS2812B_LEDS_PER_ZONE; j++) {
-        put_pixel(urgb_u32(lights_report.lights.rgb[i].r,
-                           lights_report.lights.rgb[i].g,
-                           lights_report.lights.rgb[i].b));
-      }
-    }
-  }
-}
+// void ws2812b_update(uint32_t counter) {
+//  if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
+//   ws2812b_mode(counter);
+//  } else {
+//    for (int i = 0; i < WS2812B_LED_ZONES; i++) {
+//      for (int j = 0; j < WS2812B_LEDS_PER_ZONE; j++) {
+//        put_pixel(urgb_u32(lights_report.lights.rgb[i].r,
+//                           lights_report.lights.rgb[i].g,
+//                           lights_report.lights.rgb[i].b));
+//      }
+//    }
+//  }
+//}
 
 /**
  * HID/Reactive Lights
@@ -190,13 +190,13 @@ void dma_handler() {
 /**
  * Second Core Runnable
  **/
-void core1_entry() {
-  uint32_t counter = 0;
-  while (1) {
-    ws2812b_update(++counter);
-    sleep_ms(5);
-  }
-}
+//void core1_entry() {
+//  uint32_t counter = 0;
+//  while (1) {
+//    ws2812b_update(++counter);
+//    sleep_ms(5);
+//  }
+// }
 
 /**
  * Initialize Board Pins
@@ -235,10 +235,10 @@ void init() {
   reactive_timeout_timestamp = time_us_64();
 
   // Set up WS2812B
-  pio_1 = pio1;
-  uint offset2 = pio_add_program(pio_1, &ws2812_program);
-  ws2812_program_init(pio_1, ENC_GPIO_SIZE, offset2, WS2812B_GPIO, 800000,
-                      false);
+  // pio_1 = pio1;
+  // uint offset2 = pio_add_program(pio_1, &ws2812_program);
+  // ws2812_program_init(pio_1, ENC_GPIO_SIZE, offset2, WS2812B_GPIO, 800000,
+  //                    false);
 
   // Setup Button GPIO
   for (int i = 0; i < SW_GPIO_SIZE; i++) {
@@ -270,20 +270,20 @@ void init() {
   }
 
   // RGB Mode Switching
-  if (!gpio_get(SW_GPIO[1])) {
-    ws2812b_mode = &turbocharger_color_cycle;
-  } else {
-    ws2812b_mode = &ws2812b_color_cycle;
-  }
+//  if (!gpio_get(SW_GPIO[1])) {
+//    ws2812b_mode = &turbocharger_color_cycle;
+//  } else {
+//    ws2812b_mode = &ws2812b_color_cycle;
+//  }
 
   // Debouncing Mode
   debounce_mode = &debounce_eager;
 
-  // Disable RGB
-  if (gpio_get(SW_GPIO[8])) {
-    multicore_launch_core1(core1_entry);
-  }
-}
+//  // Disable RGB
+//  if (gpio_get(SW_GPIO[8])) {
+//    multicore_launch_core1(core1_entry);
+//  }
+//}
 
 /**
  * Main Loop Function
