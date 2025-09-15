@@ -5,7 +5,7 @@
 #include <stdbool.h>   // For bool, true, false
 #include "tusb.h"      // For HID_KEY_* constants
 
-#define SW_GPIO_SIZE 8               // Number of switches (matches SW_KEYCODE length)
+#define SW_GPIO_SIZE 8               // Number of switches
 #define LED_GPIO_SIZE 10             // Number of switch LEDs
 #define ENC_GPIO_SIZE 2              // Number of encoders
 #define ENC_PPR 600                  // Encoder PPR
@@ -17,7 +17,7 @@
 
 #ifdef PICO_GAME_CONTROLLER_C
 
-// Modify keybinds here — length must match SW_GPIO_SIZE
+// Keybinds must match SW_GPIO_SIZE
 const uint8_t SW_KEYCODE[SW_GPIO_SIZE] = {
     HID_KEY_D, HID_KEY_F, HID_KEY_J, HID_KEY_K,
     HID_KEY_C, HID_KEY_M, HID_KEY_1, HID_KEY_G
@@ -33,6 +33,14 @@ const bool ENC_REV[ENC_GPIO_SIZE] = {false, false};  // Reverse encoders
 
 #endif // PICO_GAME_CONTROLLER_C
 
+// Global mode flag
 extern bool joy_mode_check;
+
+// Function declarations
+void joy_mode(void);
+void key_mode(void);
+void debounce_mode(void);
+void update_inputs(void);
+void update_lights(void);
 
 #endif // CONTROLLER_CONFIG_H

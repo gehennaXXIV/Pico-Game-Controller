@@ -35,16 +35,16 @@ struct report {
     uint8_t joy1;
 } report;
 
-// Forward declarations
-void joy_mode();
-void key_mode();
-void update_inputs();
-void update_lights();
-void debounce_mode();
+// ----- Stub functions -----
+void joy_mode(void) {}
+void key_mode(void) {}
+void debounce_mode(void) {}
+void update_inputs(void) {}
+void update_lights(void) {}
 
 // Initialize board pins and peripherals
 void init() {
-    // LED Pin
+    // Onboard LED
     gpio_init(25);
     gpio_set_dir(25, GPIO_OUT);
     gpio_put(25, 1);
@@ -67,17 +67,13 @@ void init() {
     kbm_report = false;
 
     // Mode switch (button 0)
-    if (!gpio_get(SW_GPIO[0])) {
-        joy_mode_check = false;
-    } else {
-        joy_mode_check = true;
-    }
+    joy_mode_check = gpio_get(SW_GPIO[0]);
 
     reactive_timeout_timestamp = time_us_64();
 }
 
 int main(void) {
-    board_init(); // Fixes implicit declaration
+    board_init(); // TinyUSB board init
     init();
     tusb_init();
 
