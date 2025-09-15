@@ -12,7 +12,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          submodules: true   # fetch submodules too
+          submodules: true
 
       - name: Install dependencies
         run: |
@@ -38,7 +38,7 @@ jobs:
       - name: Convert ELF to UF2
         run: |
           cd build
-          elf2uf2 src/Pico_Game_Controller.elf src/Pico_Game_Controller.uf2
+          $PICO_SDK_PATH/tools/elf2uf2/elf2uf2 src/Pico_Game_Controller.elf src/Pico_Game_Controller.uf2
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
