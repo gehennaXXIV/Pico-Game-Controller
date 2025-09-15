@@ -30,10 +30,15 @@ jobs:
           cd build
           cmake .. -DPICO_SDK_PATH=$PICO_SDK_PATH
 
-      - name: Build firmware
+      - name: Build ELF firmware
         run: |
           cd build
-          cmake --build . --target Pico_Game_Controller.uf2
+          cmake --build . --target Pico_Game_Controller
+
+      - name: Convert ELF to UF2
+        run: |
+          cd build
+          $PICO_SDK_PATH/tools/elf2uf2/elf2uf2 Pico_Game_Controller.elf Pico_Game_Controller.uf2
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
