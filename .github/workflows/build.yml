@@ -26,14 +26,14 @@ jobs:
 
       - name: Configure CMake
         run: |
-          mkdir build
+          mkdir -p build
           cd build
           cmake .. -DPICO_SDK_PATH=$PICO_SDK_PATH
 
-      - name: Build ELF firmware
+      - name: Build firmware
         run: |
           cd build
-          cmake --build . --target Pico_Game_Controller
+          cmake --build . -- -j$(nproc)
 
       - name: Convert ELF to UF2
         run: |
