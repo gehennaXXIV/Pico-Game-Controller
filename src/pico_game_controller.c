@@ -42,13 +42,13 @@ void (*loop_mode)();
 void (*debounce_mode)();
 bool joy_mode_check = true;
 
-union {
-  struct {
-    uint8_t buttons[LED_GPIO_SIZE];
-    RGB_t rgb[WS2812B_LED_ZONES];
-  } lights;
-  uint8_t raw[LED_GPIO_SIZE + WS2812B_LED_ZONES * 3];
-} lights_report;
+// union {
+//   struct {
+//     uint8_t buttons[LED_GPIO_SIZE];
+//     RGB_t rgb[WS2812B_LED_ZONES];
+//   } lights;
+//   uint8_t raw[LED_GPIO_SIZE + WS2812B_LED_ZONES * 3];
+// } lights_report;
 
 /**
  * WS2812B Lighting
@@ -71,23 +71,23 @@ union {
 /**
  * HID/Reactive Lights
  **/
-void update_lights() {
-  for (int i = 0; i < LED_GPIO_SIZE; i++) {
-    if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
-      if (!gpio_get(SW_GPIO[i])) {
-        gpio_put(LED_GPIO[i], 1);
-      } else {
-        gpio_put(LED_GPIO[i], 0);
-      }
-    } else {
-      if (lights_report.lights.buttons[i] == 0) {
-        gpio_put(LED_GPIO[i], 0);
-      } else {
-        gpio_put(LED_GPIO[i], 1);
-      }
-    }
-  }
-}
+// void update_lights() {
+//   for (int i = 0; i < LED_GPIO_SIZE; i++) {
+//     if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
+//       if (!gpio_get(SW_GPIO[i])) {
+//         gpio_put(LED_GPIO[i], 1);
+//       } else {
+//         gpio_put(LED_GPIO[i], 0);
+//       }
+//     } else {
+//       if (lights_report.lights.buttons[i] == 0) {
+//         gpio_put(LED_GPIO[i], 0);
+//       } else {
+//         gpio_put(LED_GPIO[i], 1);
+//       }
+//     }
+//   }
+// }
 
 struct report {
   uint16_t buttons;
@@ -252,10 +252,10 @@ void init() {
   }
 
   // Setup LED GPIO
-  for (int i = 0; i < LED_GPIO_SIZE; i++) {
-    gpio_init(LED_GPIO[i]);
-    gpio_set_dir(LED_GPIO[i], GPIO_OUT);
-  }
+  // for (int i = 0; i < LED_GPIO_SIZE; i++) {
+  //   gpio_init(LED_GPIO[i]);
+  //   gpio_set_dir(LED_GPIO[i], GPIO_OUT);
+  // }
 
   // Set listener bools
   kbm_report = false;
@@ -318,21 +318,4 @@ uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id,
   (void)reqlen;
 
   return 0;
-}
-
-// Invoked when received SET_REPORT control request or
-// received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id,
-                           hid_report_type_t report_type, uint8_t const* buffer,
-                           uint16_t bufsize) {
-  (void)itf;
-  if (report_id == 2 && report_type == HID_REPORT_TYPE_OUTPUT &&
-      bufsize >= sizeof(lights_report))  // light data
-  {
-    size_t i = 0;
-    for (i; i < sizeof(lights_report); i++) {
-      lights_report.raw[i] = buffer[i];
-    }
-    reactive_timeout_timestamp = time_us_64();
-  }
 }
