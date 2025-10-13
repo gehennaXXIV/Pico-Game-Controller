@@ -12,7 +12,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          submodules: true   # fetch submodules too
+          submodules: true
 
       - name: Install dependencies
         run: |
@@ -40,3 +40,15 @@ jobs:
         with:
           name: pico-game-controller
           path: build/**/*.uf2
+          if-no-files-found: error
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/**/*.uf2
+          tag_name: latest
+          name: Latest Build
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
