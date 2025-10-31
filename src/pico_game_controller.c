@@ -3,6 +3,8 @@
  * @author SpeedyPotato
  */
 #define PICO_GAME_CONTROLLER_C
+#define BOOT_BTN1 11
+#define BOOT_BTN2 12
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +25,49 @@
 #include "debounce/debounce_include.h"
 #include "rgb/rgb_include.h"
 // clang-format on
+
+void enter_boot_mode() {
+    // Your custom boot mode logic here
+    // For example: blink LED, wait for USB, enter config, etc.
+    while (1) {
+        gpio_put(25, 1); // Turn on onboard LED
+        sleep_ms(200);
+        gpio_put(25, 0);
+        sleep_ms(200);
+    }
+}
+
+int main(void) {
+    // Initialize stdio and the boot mode GPIOs first
+    stdio_init_all();
+
+    gpio_init(BOOT_BTN1);
+    gpio_set_dir(BOOT_BTN1, GPIO_IN);
+    gpio_pull_up(BOOT_BTN1);
+
+    gpio_init(BOOT_BTN2);
+    gpio_set_dir(BOOT_BTN2, GPIO_IN);
+    gpio_pull_up(BOOT_BTN2);
+
+    // Check if both buttons are held (active low)
+    if (!gpio_get(BOOT_BTN1) && !gpio_get(BOOT_BTN2)) {
+        enter_boot_mode();
+        // This function does not return
+    }
+
+    // ...rest of your normal init and main loop...
+    init();
+    tusb_init();
+
+    while (1) {
+        tud_task();
+        debounce_mode();
+        update_inputs();
+        loop_mode();
+        update_lights();
+    }
+    return 0;
+}
 
 PIO pio, pio_1;
 uint32_t enc_val[ENC_GPIO_SIZE];
