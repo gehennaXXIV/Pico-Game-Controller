@@ -1,7 +1,7 @@
 #ifndef CONTROLLER_CONFIG_H
 #define CONTROLLER_CONFIG_H
 
-#define SW_GPIO_SIZE 8                // Number of switches
+#define SW_GPIO_SIZE 9                // Number of switches
 #define LED_GPIO_SIZE 1               // Number of switch LEDs
 #define ENC_GPIO_SIZE 2               // Number of encoders
 #define ENC_PPR 24                    // Encoder PPR
@@ -19,9 +19,9 @@
 
 // MODIFY KEYBINDS HERE, MAKE SURE LENGTHS MATCH SW_GPIO_SIZE
 const uint8_t SW_KEYCODE[] = {HID_KEY_D, HID_KEY_F, HID_KEY_J, HID_KEY_K,
-                              HID_KEY_C, HID_KEY_M, HID_KEY_A, HID_KEY_B};
+                              HID_KEY_C, HID_KEY_M, HID_KEY_A, HID_KEY_B, HID_KEY_1};
 const uint8_t SW_GPIO[] = {
-    13, 11, 9, 7, 12, 8, 0, 10,
+    13, 11, 9, 7, 12, 8, 0, 27, 10,
 };
 const uint8_t LED_GPIO[] = {
     2,
