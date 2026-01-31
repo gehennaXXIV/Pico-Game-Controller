@@ -153,21 +153,21 @@ uint8_t const* tud_descriptor_configuration_cb(uint8_t index) {
 char const* string_desc_arr[] = {
     (const char[]){0x09, 0x04},  // 0: is supported language is English (0x0409)
     "Konami Amusement",          // 1: Manufacturer
-    "SOUND VOLTEX controller",   // 2: Product
+    "POP'n ZERO controller",     // 2: Product
     "123456",                    // 3: Serials, should use chip ID
     "BT-A",
     "BT-B",
     "BT-C",
     "BT-D",
+    "BT-E",
+    "BT-F",
+    "BT-G",
+    "BT-H",
+    "BT-I",
     "FX-L",
     "FX-R",
     "Start",
-    "Left R",
-    "Left G",
-    "Left B",
-    "Right R",
-    "Right G",
-    "Right B",
+    "Back",
 };
 
 static uint16_t _desc_str[64];
