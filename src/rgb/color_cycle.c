@@ -1,35 +1,40 @@
-void ws2812b_color_cycle(uint32_t counter) {
-    // 1. Your requested colors
-    uint32_t colors[9] = {
-        urgb_u32(255, 255, 255), // White
-        urgb_u32(255, 255, 0),   // Yellow
-        urgb_u32(0, 255, 0),     // Green
-        urgb_u32(0, 0, 255),     // Blue
-        urgb_u32(255, 0, 0),     // Red
-        urgb_u32(0, 0, 255),     // Blue
-        urgb_u32(0, 255, 0),     // Green
-        urgb_u32(255, 255, 0),   // Yellow
-        urgb_u32(255, 255, 255)  // White
-    };
+// 1. We create a "memory" for the brightness of each of the 9 LEDs.
+// We use 'static' so the Pico remembers these numbers even after the function finishes.
+static uint8_t brightness[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    // 2. THE LED MAP
-    // This tells the code: Button 0 controls LED 8, Button 1 controls LED 0, etc.
-    // (Note: We use 0-8 for coding instead of 1-9)
+void ws2812b_color_cycle(uint32_t counter) {
+    // Your Button to LED mapping from before
     int led_map[9] = {8, 0, 7, 1, 6, 2, 5, 3, 4};
 
-    // 3. Create a temporary list to hold which LEDs should be ON
-    uint32_t led_output[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    // The base colors you want
+    // Note: These are R, G, B values. We will apply brightness to these.
+    uint8_t colors_r[9] = {255, 255, 0,   0,   255, 0,   0,   255, 255};
+    uint8_t colors_g[9] = {255, 255, 255, 0,   0,   0,   255, 255, 255};
+    uint8_t colors_b[9] = {255, 0,   0,   255, 0,   255, 0,   0,   255};
 
+    // 2. Check Buttons
     for (int i = 0; i < 9; i++) {
-        // If button 'i' is pressed...
         if (!gpio_get(SW_GPIO[i])) { 
-            // ...put that button's color into the correct LED position
-            led_output[led_map[i]] = colors[i];
+            // Button is pressed: Set brightness to MAX
+            brightness[led_map[i]] = 255;
+        } else {
+            // Button is NOT pressed: Slowly fade out
+            // To make it fade SLOWER, change '2' to '1'. 
+            // To make it fade FASTER, change '2' to '5'.
+            if (brightness[led_map[i]] > 0) {
+                brightness[led_map[i]] -= 1; 
+            }
         }
     }
 
-    // 4. Send the pixels to the chain in the physical order (0 to 8)
+    // 3. Send to LEDs
     for (int i = 0; i < 9; i++) {
-        put_pixel(led_output[i]);
+        // We calculate the color based on the current brightness
+        // This math scales the 255 color down to 0
+        uint8_t r = (colors_r[i] * brightness[i]) / 255;
+        uint8_t g = (colors_g[i] * brightness[i]) / 255;
+        uint8_t b = (colors_b[i] * brightness[i]) / 255;
+        
+        put_pixel(urgb_u32(r, g, b));
     }
 }
