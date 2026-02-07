@@ -1,30 +1,31 @@
-#include "../controller_config.h"  // <--- ADD THIS LINE
-#include "pico/stdlib.h"           // Adds the gpio_get tool
+#include "pico/stdlib.h"
+#include "../controller_config.h"
 
 /**
- * Button Reactive Lighting for 9 LEDs
+ * Button Reactive Lighting
+ * Colors: White, Yellow, Green, Blue, Red, Blue, Green, Yellow, White
  **/
 
-#define COLOR_WHITE  urgb_u32(255, 255, 255)
-#define COLOR_YELLOW urgb_u32(255, 255, 0)
-#define COLOR_GREEN  urgb_u32(0, 255, 0)
-#define COLOR_BLUE   urgb_u32(0, 0, 255)
-#define COLOR_RED    urgb_u32(255, 0, 0)
-#define COLOR_OFF    urgb_u32(0, 0, 0)
-
 void button_reactive_lighting(uint32_t unused) {
+    // These match the 9 LEDs in your chain
     uint32_t target_colors[9] = {
-        COLOR_WHITE, COLOR_YELLOW, COLOR_GREEN, COLOR_BLUE, 
-        COLOR_RED, 
-        COLOR_BLUE, COLOR_GREEN, COLOR_YELLOW, COLOR_WHITE
+        urgb_u32(255, 255, 255), // White
+        urgb_u32(255, 255, 0),   // Yellow
+        urgb_u32(0, 255, 0),     // Green
+        urgb_u32(0, 0, 255),     // Blue
+        urgb_u32(255, 0, 0),     // Red
+        urgb_u32(0, 0, 255),     // Blue
+        urgb_u32(0, 255, 0),     // Green
+        urgb_u32(255, 255, 0),   // Yellow
+        urgb_u32(255, 255, 255)  // White
     };
 
     for (int i = 0; i < 9; i++) {
-        // Now BUTTON_GPIO will be recognized
+        // gpio_get checks the pin. ! means "if pressed (0)"
         if (!gpio_get(BUTTON_GPIO[i])) { 
             put_pixel(target_colors[i]);
         } else {
-            put_pixel(COLOR_OFF);
+            put_pixel(0); // Off
         }
     }
 }
