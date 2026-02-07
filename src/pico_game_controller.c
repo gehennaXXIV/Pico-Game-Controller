@@ -55,17 +55,8 @@ union {
  * @param counter Current number of WS2812B cycles
  **/
 void ws2812b_update(uint32_t counter) {
-  if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
-    ws2812b_mode(counter);
-  } else {
-    for (int i = 0; i < WS2812B_LED_ZONES; i++) {
-      for (int j = 0; j < WS2812B_LEDS_PER_ZONE; j++) {
-        put_pixel(urgb_u32(lights_report.lights.rgb[i].r,
-                           lights_report.lights.rgb[i].g,
-                           lights_report.lights.rgb[i].b));
-      }
-    }
-  }
+    // This ignores the PC and the timeout, and just runs your button logic
+    ws2812b_mode(counter); 
 }
 
 /**
