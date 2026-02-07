@@ -287,14 +287,14 @@ void init() {
   if (!gpio_get(SW_GPIO[1])) {
     ws2812b_mode = &turbocharger_color_cycle;
   } else {
-    ws2812b_mode = &button_reactive_lighting;
+    ws2812b_mode = &ws2812b_color_cycle;
   }
 
   // Debouncing Mode
   debounce_mode = &debounce_eager;
 
   // Disable RGB
-  if (gpio_get(SW_GPIO[26])) {
+  if (gpio_get(SW_GPIO[7])) {
     multicore_launch_core1(core1_entry);
   }
 }
