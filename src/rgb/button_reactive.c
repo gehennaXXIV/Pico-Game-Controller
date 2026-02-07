@@ -1,13 +1,13 @@
 #include "pico/stdlib.h"
-#include "../controller_config.h"
+
+// This tells the compiler the button list is defined in another file
+extern const uint8_t BUTTON_GPIO[];
 
 /**
  * Button Reactive Lighting
- * Colors: White, Yellow, Green, Blue, Red, Blue, Green, Yellow, White
  **/
-
 void button_reactive_lighting(uint32_t unused) {
-    // These match the 9 LEDs in your chain
+    // Your requested colors
     uint32_t target_colors[9] = {
         urgb_u32(255, 255, 255), // White
         urgb_u32(255, 255, 0),   // Yellow
@@ -21,7 +21,7 @@ void button_reactive_lighting(uint32_t unused) {
     };
 
     for (int i = 0; i < 9; i++) {
-        // gpio_get checks the pin. ! means "if pressed (0)"
+        // gpio_get reads the pin. ! means "is pressed"
         if (!gpio_get(BUTTON_GPIO[i])) { 
             put_pixel(target_colors[i]);
         } else {
