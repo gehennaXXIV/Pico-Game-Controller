@@ -9,4 +9,5 @@ extern uint32_t enc_val[ENC_GPIO_SIZE];
 
 #include "ws2812b_util.c"
 #include "button_reactive.c"
+#include "color_cycle.c"
 #include "turbocharger.c"
