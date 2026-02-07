@@ -1,3 +1,5 @@
+extern hid_gamepad_report_t report;
+
 void ws2812b_color_cycle(uint32_t counter) {
     (void)counter;
 
