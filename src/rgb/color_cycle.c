@@ -4,6 +4,7 @@ static int scan_idx = 0;
 static int scan_dir = 1;
 
 void ws2812b_color_cycle(uint32_t counter) {
+    // Set your preferred max brightness here (e.g., 100)
     uint8_t MAX_BRIGHTNESS = 100; 
     int led_map[9] = {8, 0, 7, 1, 6, 2, 5, 3, 4};
 
@@ -27,14 +28,14 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
     }
 
-    // 2. Simple Idle Animation (After 10 seconds / 2000 loops)
+    // 2. Idle Animation (Starts after 10 seconds)
     if (active) {
         idle_timer = 0;
     } else {
         idle_timer++;
         if (idle_timer > 2000) {
-            // Every 100ms (20 loops), move the scanner
-            if (idle_timer % 20 == 0) {
+            // Increased to 27 for ~75% speed (moves every 135ms)
+            if (idle_timer % 27 == 0) {
                 brightness[led_map[scan_idx]] = MAX_BRIGHTNESS;
                 scan_idx += scan_dir;
                 if (scan_idx >= 8 || scan_idx <= 0) scan_dir *= -1;
@@ -53,9 +54,12 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
 
         if (button_index != -1) {
+            // Apply both the button color and the brightness scaling
+            // We use 255 here to ensure the original color ratios stay correct
             uint8_t r = (btn_r[button_index] * brightness[i]) / 255;
             uint8_t g = (btn_g[button_index] * brightness[i]) / 255;
             uint8_t b = (btn_b[button_index] * brightness[i]) / 255;
+            
             put_pixel(urgb_u32(r, g, b));
         } else {
             put_pixel(0);
