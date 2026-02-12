@@ -4,9 +4,9 @@ static int scan_idx = 0;
 static int scan_dir = 1;
 
 void ws2812b_color_cycle(uint32_t counter) {
-    // --- FINAL TWEAKS ---
-    uint8_t MAX_BRIGHTNESS = 50;  // Dropped from 100 to 50 for much lower brightness
-    int animation_speed = 40;     // Increased from 27 to 40 for slower movement
+    // --- v1.1 SETTINGS ---
+    uint8_t MAX_BRIGHTNESS = 50;  
+    int animation_speed = 60;     // Slightly slower looks better for mirrored moves
     // --------------------
 
     int led_map[9] = {8, 0, 7, 1, 6, 2, 5, 3, 4};
@@ -20,32 +20,34 @@ void ws2812b_color_cycle(uint32_t counter) {
     // 1. Process Buttons and Fading
     for (int i = 0; i < 9; i++) {
         int physical_led = led_map[i];
-
         if (!gpio_get(SW_GPIO[i])) { 
             brightness[physical_led] = MAX_BRIGHTNESS;
             active = true;
         } else {
-            // Fade logic (stays at -= 1 for the 1-second feel)
             if (brightness[physical_led] > 0) {
                 brightness[physical_led] -= 1; 
             }
         }
     }
 
-    // 2. Idle Animation (Starts after 10 seconds)
+    // 2. Mirrored Idle Animation (After 10 seconds)
     if (active) {
         idle_timer = 0;
     } else {
         idle_timer++;
         if (idle_timer > 2000) {
-            // Moves only when the timer hits a multiple of animation_speed
             if (idle_timer % animation_speed == 0) {
-                brightness[led_map[scan_idx]] = MAX_BRIGHTNESS;
+                
+                // Light up the mirrored pair
+                // scan_idx will go 0, 1, 2, 3, 4
+                brightness[led_map[scan_idx]] = MAX_BRIGHTNESS;      // Left-side moving in
+                brightness[led_map[8 - scan_idx]] = MAX_BRIGHTNESS;  // Right-side moving in
+
                 scan_idx += scan_dir;
                 
-                // Bounce logic
-                if (scan_idx >= 8) {
-                    scan_idx = 8;
+                // Bounce logic (only goes up to 4 since it's mirrored)
+                if (scan_idx >= 4) {
+                    scan_idx = 4;
                     scan_dir = -1;
                 } else if (scan_idx <= 0) {
                     scan_idx = 0;
@@ -55,7 +57,7 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
     }
 
-    // 3. Render LEDs
+    // 3. Render
     for (int i = 0; i < 9; i++) {
         int button_index = -1;
         for(int j = 0; j < 9; j++) {
@@ -66,11 +68,9 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
 
         if (button_index != -1) {
-            // This applies the button's specific color at the current brightness level
             uint8_t r = (btn_r[button_index] * brightness[i]) / 255;
             uint8_t g = (btn_g[button_index] * brightness[i]) / 255;
             uint8_t b = (btn_b[button_index] * brightness[i]) / 255;
-            
             put_pixel(urgb_u32(r, g, b));
         } else {
             put_pixel(0);
