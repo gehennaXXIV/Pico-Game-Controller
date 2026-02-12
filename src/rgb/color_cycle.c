@@ -4,8 +4,11 @@ static int scan_idx = 0;
 static int scan_dir = 1;
 
 void ws2812b_color_cycle(uint32_t counter) {
-    // Set your preferred max brightness here (e.g., 100)
-    uint8_t MAX_BRIGHTNESS = 100; 
+    // --- FINAL TWEAKS ---
+    uint8_t MAX_BRIGHTNESS = 50;  // Dropped from 100 to 50 for much lower brightness
+    int animation_speed = 40;     // Increased from 27 to 40 for slower movement
+    // --------------------
+
     int led_map[9] = {8, 0, 7, 1, 6, 2, 5, 3, 4};
 
     uint8_t btn_r[9] = {255, 255, 0,   0,   255, 0,   0,   255, 255};
@@ -22,6 +25,7 @@ void ws2812b_color_cycle(uint32_t counter) {
             brightness[physical_led] = MAX_BRIGHTNESS;
             active = true;
         } else {
+            // Fade logic (stays at -= 1 for the 1-second feel)
             if (brightness[physical_led] > 0) {
                 brightness[physical_led] -= 1; 
             }
@@ -34,11 +38,19 @@ void ws2812b_color_cycle(uint32_t counter) {
     } else {
         idle_timer++;
         if (idle_timer > 2000) {
-            // Increased to 27 for ~75% speed (moves every 135ms)
-            if (idle_timer % 27 == 0) {
+            // Moves only when the timer hits a multiple of animation_speed
+            if (idle_timer % animation_speed == 0) {
                 brightness[led_map[scan_idx]] = MAX_BRIGHTNESS;
                 scan_idx += scan_dir;
-                if (scan_idx >= 8 || scan_idx <= 0) scan_dir *= -1;
+                
+                // Bounce logic
+                if (scan_idx >= 8) {
+                    scan_idx = 8;
+                    scan_dir = -1;
+                } else if (scan_idx <= 0) {
+                    scan_idx = 0;
+                    scan_dir = 1;
+                }
             }
         }
     }
@@ -54,8 +66,7 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
 
         if (button_index != -1) {
-            // Apply both the button color and the brightness scaling
-            // We use 255 here to ensure the original color ratios stay correct
+            // This applies the button's specific color at the current brightness level
             uint8_t r = (btn_r[button_index] * brightness[i]) / 255;
             uint8_t g = (btn_g[button_index] * brightness[i]) / 255;
             uint8_t b = (btn_b[button_index] * brightness[i]) / 255;
