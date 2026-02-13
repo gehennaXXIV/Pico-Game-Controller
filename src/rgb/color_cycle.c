@@ -35,7 +35,7 @@ void ws2812b_color_cycle(uint32_t counter) {
         idle_timer = 0;
     } else {
         idle_timer++;
-        if (idle_timer > 2000) {
+        if (idle_timer > 1000) {
             if (idle_timer % animation_speed == 0) {
                 
                 // Light up the mirrored pair
