@@ -1,5 +1,5 @@
 static uint8_t brightness[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-static uint32_t idle_timer = 0;
+static uint32_t idle_timer = 1001;
 static int scan_idx = 0;
 static int scan_dir = 1;
 
