@@ -266,7 +266,7 @@ void init() {
   kbm_report = false;
 
   // Joy/KB Mode Switching
-  if (!gpio_get(SW_GPIO[6])) {
+  if (!gpio_get(SW_GPIO[10])) {
     loop_mode = &key_mode;
     joy_mode_check = false;
   } else {
@@ -285,7 +285,7 @@ void init() {
   debounce_mode = &debounce_eager;
 
   // Disable RGB
-  if (gpio_get(SW_GPIO[10])) {
+  if (gpio_get(SW_GPIO[11])) {
     multicore_launch_core1(core1_entry);
   }
 }
