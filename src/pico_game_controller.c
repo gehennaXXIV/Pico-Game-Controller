@@ -266,7 +266,7 @@ void init() {
   kbm_report = false;
 
   // Joy/KB Mode Switching
-  if (!gpio_get(SW_GPIO[0])) {
+  if (!gpio_get(SW_GPIO[6])) {
     loop_mode = &key_mode;
     joy_mode_check = false;
   } else {
