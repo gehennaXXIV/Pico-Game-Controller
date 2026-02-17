@@ -1,36 +1,51 @@
-/**
- * Updates input states and stores true state into report.buttons.
- **/
-void update_inputs() {
-  report.buttons = 0;
-  
-  // 1. Standard Input Check
-  for (int i = SW_GPIO_SIZE - 1; i >= 0; i--) {
-    // Note: sw_cooked_val comes from the debounce logic elsewhere
-    sw_prev_raw_val[i] = !gpio_get(SW_GPIO[i]);
+/*
+ * Pico Game Controller v1.4
+ * Optimized for Buttons + Brightness Control
+ */
+#define PICO_GAME_CONTROLLER_C
 
-    report.buttons <<= 1;
-    report.buttons |= sw_cooked_val[i];
-  }
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-  // 2. Custom Brightness Controls (v1.4)
-  // Check if SW_GPIO 11 (Index 10) is being held
-  if (!gpio_get(SW_GPIO[10])) {
-    
-    // Lower Brightness: SW_GPIO 2 (Index 1)
-    if (!gpio_get(SW_GPIO[1])) {
-      if (global_brightness > 5) global_brightness -= 5;
-      sleep_ms(50); 
-    }
-    
-    // Increase Brightness: SW_GPIO 7 (Index 6)
-    if (!gpio_get(SW_GPIO[6])) {
-      if (global_brightness < 250) global_brightness += 5;
-      sleep_ms(50); 
-    }
+#include "bsp/board.h"
+#include "controller_config.h"
+#include "encoders.pio.h"
+#include "hardware/clocks.h"
+#include "hardware/dma.h"
+#include "hardware/irq.h"
+#include "hardware/pio.h"
+#include "pico/multicore.h"
+#include "pico/stdlib.h"
+#include "tusb.h"
+#include "usb_descriptors.h"
 
-    // MASKING: Prevent keypresses while adjusting brightness
-    report.buttons &= ~(1 << 1);  
-    report.buttons &= ~(1 << 6);
-  }
-} // <--- Check that this brace exists!
+// clang-format off
+#include "debounce/debounce_include.h"
+#include "rgb/rgb_include.h"
+// clang-format on
+
+// --- GLOBAL VARIABLES ---
+volatile uint8_t global_brightness = 50; 
+PIO pio, pio_1;
+
+// Encoder arrays (kept for compatibility, though logic is stripped)
+uint32_t enc_val[ENC_GPIO_SIZE];
+uint32_t prev_enc_val[ENC_GPIO_SIZE];
+int cur_enc_val[ENC_GPIO_SIZE];
+
+bool sw_prev_raw_val[SW_GPIO_SIZE];
+bool sw_cooked_val[SW_GPIO_SIZE];
+uint64_t sw_timestamp[SW_GPIO_SIZE];
+bool kbm_report = false;
+uint64_t reactive_timeout_timestamp;
+
+void (*ws2812b_mode)();
+void (*loop_mode)();
+void (*debounce_mode)();
+bool joy_mode_check = true;
+
+union {
+  struct {
+    uint8_t buttons[LED_GPIO_SIZE];
+    RGB_t rgb[WS2812B_LED_ZONES];

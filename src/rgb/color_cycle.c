@@ -7,7 +7,6 @@ extern uint8_t global_brightness; // Link to the variable in main file
 
 void ws2812b_color_cycle(uint32_t counter) {
     // --- v1.4 SETTINGS ---
-    // We use the global variable instead of a fixed number
     uint8_t MAX_BRIGHTNESS = global_brightness;  
     int animation_speed = 60;     
     // --------------------
@@ -27,6 +26,12 @@ void ws2812b_color_cycle(uint32_t counter) {
             brightness[physical_led] = MAX_BRIGHTNESS;
             active = true;
         } else {
+            // If the brightness was set higher than the current global max (e.g. you just dimmed it)
+            // we cap it immediately so the change feels responsive.
+            if (brightness[physical_led] > MAX_BRIGHTNESS) {
+                brightness[physical_led] = MAX_BRIGHTNESS;
+            }
+
             if (brightness[physical_led] > 0) {
                 brightness[physical_led] -= 1; 
             }
@@ -67,10 +72,12 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
 
         if (button_index != -1) {
-            // Brightness calculation remains stable
             uint8_t r = (btn_r[button_index] * brightness[i]) / 255;
             uint8_t g = (btn_g[button_index] * brightness[i]) / 255;
             uint8_t b = (btn_b[button_index] * brightness[i]) / 255;
             put_pixel(urgb_u32(r, g, b));
         } else {
             put_pixel(0);
+        }
+    }
+}
