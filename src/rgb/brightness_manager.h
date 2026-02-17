@@ -4,8 +4,7 @@
 #include "pico/stdlib.h"
 #include "controller_config.h"
 
-// Start at 50, but don't let it go below 10 so fade still works
-static uint8_t global_brightness = 50;
+static uint8_t global_brightness = 30;
 
 static inline void handle_brightness_shortcuts() {
     // Hold Button 11 (Index 10)
@@ -13,17 +12,16 @@ static inline void handle_brightness_shortcuts() {
         static uint32_t last_tick = 0;
         uint32_t now = to_ms_since_boot(get_absolute_time());
 
-        if (now - last_tick > 50) {
-            // DECREASE: Button 4 Blue (Index 3)
-            // Cap at 10 so the fade animation remains visible
             if (!gpio_get(SW_GPIO[3])) {
-                if (global_brightness > 20) global_brightness -= 5;
+                if (global_brightness >= 5) { // Check if we have at least 5 to subtract
+                    global_brightness -= 5;
+                } else {
+                    global_brightness = 0;   // Otherwise, lock it at 0
+                }
             }
             
-            // INCREASE: Button 6 Blue (Index 5)
-            // Check if it's below our max limit
             if (!gpio_get(SW_GPIO[5])) {
-                if (global_brightness < 250) global_brightness += 5;
+                if (global_brightness < 100) global_brightness += 5;
             }
             last_tick = now;
         }
