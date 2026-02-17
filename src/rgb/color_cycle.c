@@ -1,12 +1,15 @@
 static uint8_t brightness[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-static uint32_t idle_timer = 1001;
+static uint32_t idle_timer = 1001; // Instant start on plug-in
 static int scan_idx = 0;
 static int scan_dir = 1;
 
+extern uint8_t global_brightness; // Link to the variable in main file
+
 void ws2812b_color_cycle(uint32_t counter) {
-    // --- v1.1 SETTINGS ---
-    uint8_t MAX_BRIGHTNESS = 50;  
-    int animation_speed = 60;     // Slightly slower looks better for mirrored moves
+    // --- v1.4 SETTINGS ---
+    // We use the global variable instead of a fixed number
+    uint8_t MAX_BRIGHTNESS = global_brightness;  
+    int animation_speed = 60;     
     // --------------------
 
     int led_map[9] = {8, 0, 7, 1, 6, 2, 5, 3, 4};
@@ -30,22 +33,18 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
     }
 
-    // 2. Mirrored Idle Animation (After 10 seconds)
+    // 2. Mirrored Idle Animation
     if (active) {
         idle_timer = 0;
     } else {
         idle_timer++;
-        if (idle_timer > 1000) {
+        if (idle_timer > 1000) { // 5-second wait
             if (idle_timer % animation_speed == 0) {
-                
-                // Light up the mirrored pair
-                // scan_idx will go 0, 1, 2, 3, 4
-                brightness[led_map[scan_idx]] = MAX_BRIGHTNESS;      // Left-side moving in
-                brightness[led_map[8 - scan_idx]] = MAX_BRIGHTNESS;  // Right-side moving in
+                brightness[led_map[scan_idx]] = MAX_BRIGHTNESS;
+                brightness[led_map[8 - scan_idx]] = MAX_BRIGHTNESS;
 
                 scan_idx += scan_dir;
                 
-                // Bounce logic (only goes up to 4 since it's mirrored)
                 if (scan_idx >= 4) {
                     scan_idx = 4;
                     scan_dir = -1;
@@ -68,12 +67,10 @@ void ws2812b_color_cycle(uint32_t counter) {
         }
 
         if (button_index != -1) {
+            // Brightness calculation remains stable
             uint8_t r = (btn_r[button_index] * brightness[i]) / 255;
             uint8_t g = (btn_g[button_index] * brightness[i]) / 255;
             uint8_t b = (btn_b[button_index] * brightness[i]) / 255;
             put_pixel(urgb_u32(r, g, b));
         } else {
             put_pixel(0);
-        }
-    }
-}

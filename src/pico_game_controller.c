@@ -23,6 +23,7 @@
 #include "debounce/debounce_include.h"
 #include "rgb/rgb_include.h"
 // clang-format on
+volatile uint8_t global_brightness = 20; // Default v1.3 brightness
 
 PIO pio, pio_1;
 uint32_t enc_val[ENC_GPIO_SIZE];
@@ -160,11 +161,35 @@ void key_mode() {
  **/
 void update_inputs() {
   report.buttons = 0;
+  
+  // 1. Standard Input Check
   for (int i = SW_GPIO_SIZE - 1; i >= 0; i--) {
     sw_prev_raw_val[i] = !gpio_get(SW_GPIO[i]);
 
     report.buttons <<= 1;
     report.buttons |= sw_cooked_val[i];
+  }
+
+  // 2. Custom Brightness Controls (v1.4)
+  // Check if SW_GPIO 11 (Index 10) is being held
+  if (!gpio_get(SW_GPIO[10])) {
+    
+    // While holding 11, check SW_GPIO 2 (Index 1) to Lower
+    if (!gpio_get(SW_GPIO[1])) {
+      if (global_brightness > 5) global_brightness -= 5;
+      sleep_ms(50); // Delay so it doesn't drop too fast
+    }
+    
+    // While holding 11, check SW_GPIO 7 (Index 6) to Increase
+    if (!gpio_get(SW_GPIO[6])) {
+      if (global_brightness < 250) global_brightness += 5;
+      sleep_ms(50); // Delay so it doesn't jump too fast
+    }
+
+    // MASKING: Clear the bits for buttons 2 and 7 so they don't 
+    // trigger keyboard inputs while you are adjusting brightness
+    report.buttons &= ~(1 << 1); 
+    report.buttons &= ~(1 << 6);
   }
 }
 
