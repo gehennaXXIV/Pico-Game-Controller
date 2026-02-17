@@ -22,10 +22,19 @@ void ws2812b_color_cycle(uint32_t counter) {
     // 1. Process Buttons and Fading
     for (int i = 0; i < 9; i++) {
         int physical_led = led_map[i];
+        
+        // If button is pressed, jump to current MAX
         if (!gpio_get(SW_GPIO[i])) { 
             brightness[physical_led] = MAX_BRIGHTNESS;
             active = true;
         } else {
+            // FADING LOGIC
+            // If the global brightness was lowered, cap the current LED so it doesn't "pop"
+            if (brightness[physical_led] > MAX_BRIGHTNESS) {
+                brightness[physical_led] = MAX_BRIGHTNESS;
+            }
+
+            // Standard fade out
             if (brightness[physical_led] > 0) {
                 brightness[physical_led] -= 1; 
             }
