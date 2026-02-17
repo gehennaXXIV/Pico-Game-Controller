@@ -17,12 +17,12 @@ static inline void handle_brightness_shortcuts() {
             // DECREASE: Button 2 (Index 1)
             // Cap at 10 so the fade animation remains visible
             if (!gpio_get(SW_GPIO[1])) {
-                if (global_brightness > 10) global_brightness -= 5;
+                if (global_brightness > 20) global_brightness -= 5;
             }
             
-            // INCREASE: Button 7 (Index 6)
+            // INCREASE: Button 8 (Index 7)
             // Check if it's below our max limit
-            if (!gpio_get(SW_GPIO[6])) {
+            if (!gpio_get(SW_GPIO[7])) {
                 if (global_brightness < 250) global_brightness += 5;
             }
             last_tick = now;
