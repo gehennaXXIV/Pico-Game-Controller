@@ -14,15 +14,15 @@ static inline void handle_brightness_shortcuts() {
         uint32_t now = to_ms_since_boot(get_absolute_time());
 
         if (now - last_tick > 50) {
-            // DECREASE: Button 2 (Index 1)
+            // DECREASE: Button 4 Blue (Index 3)
             // Cap at 10 so the fade animation remains visible
-            if (!gpio_get(SW_GPIO[1])) {
+            if (!gpio_get(SW_GPIO[3])) {
                 if (global_brightness > 20) global_brightness -= 5;
             }
             
-            // INCREASE: Button 8 (Index 7)
+            // INCREASE: Button 6 Blue (Index 5)
             // Check if it's below our max limit
-            if (!gpio_get(SW_GPIO[7])) {
+            if (!gpio_get(SW_GPIO[5])) {
                 if (global_brightness < 250) global_brightness += 5;
             }
             last_tick = now;
