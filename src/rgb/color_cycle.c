@@ -10,7 +10,10 @@ void ws2812b_color_cycle(uint32_t counter) {
     uint8_t MAX_BRIGHTNESS = get_global_brightness();
     uint8_t mode = get_light_mode();
     
-    // Maps Physical Button Index (0-8) to LED Position in Chain
+    // Tweak these to change the feel
+    const float BREATH_SPEED = 0.02f;  // Lower is slower (was 0.05f)
+    const float BREATH_SPREAD = 0.6f;  // How much the wave "stretches" across buttons
+
     int led_map[9] = {8, 0, 7, 1, 6, 2, 5, 3, 4};
     
     uint8_t btn_r[9] = {255, 255, 0,   0,   255, 0,   0,   255, 255};
@@ -44,12 +47,10 @@ void ws2812b_color_cycle(uint32_t counter) {
                 else if (scan_idx <= 0) { scan_idx = 0; scan_dir = 1; }
             }
         }
-        // Breathing (Mode 1) is handled in the rendering loop to ensure wave alignment
     }
 
     // 3. Fading and Rendering
     for (int i = 0; i < 9; i++) {
-        // Find which physical Button (j) is at this LED (i)
         int btn_idx = 0;
         for(int j = 0; j < 9; j++) {
             if(led_map[j] == i) {
@@ -61,20 +62,17 @@ void ws2812b_color_cycle(uint32_t counter) {
         uint8_t final_b = 0;
 
         if (mode == 1 && idle_timer > 1000) {
-            // BREATHING follows Button Array (btn_idx) 0 -> 1 -> 2 ...
-            float wave = (sinf(counter * 0.05f - (btn_idx * 0.6f)) + 1.0f) / 2.0f;
+            // Apply the new slower speed and spread constants
+            float wave = (sinf(counter * BREATH_SPEED - (btn_idx * BREATH_SPREAD)) + 1.0f) / 2.0f;
             final_b = (uint8_t)(wave * MAX_BRIGHTNESS);
             
-            // Keep button press override
             if (brightness[i] > final_b) final_b = brightness[i];
         } else {
             final_b = brightness[i];
         }
 
-        // Apply background fade
         if (brightness[i] > 0) brightness[i] -= 1;
 
-        // Push to LED
         uint8_t r = (btn_r[btn_idx] * final_b) / 255;
         uint8_t g = (btn_g[btn_idx] * final_b) / 255;
         uint8_t b = (btn_b[btn_idx] * final_b) / 255;
