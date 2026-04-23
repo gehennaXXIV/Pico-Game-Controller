@@ -24,6 +24,11 @@
 #include "rgb/rgb_include.h"
 // clang-format on
 
+// --- Encoder Hold Settings ---
+#define ENC_HOLD_TIME_US 50000 // 50ms hold time
+uint64_t enc0_timeout = 0;
+uint64_t enc1_timeout = 0;
+
 PIO pio, pio_1;
 uint32_t enc_val[ENC_GPIO_SIZE];
 uint32_t prev_enc_val[ENC_GPIO_SIZE];
@@ -52,7 +57,6 @@ union {
 
 /**
  * WS2812B Lighting
- * @param counter Current number of WS2812B cycles
  **/
 void ws2812b_update(uint32_t counter) {
   if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
@@ -86,7 +90,6 @@ void update_lights() {
         gpio_put(LED_GPIO[i], 1);
       }
     }
-    /* start button sw_val index is offset by two with respect to LED_GPIO */
     if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
       if (!gpio_get(SW_GPIO[LED_GPIO_SIZE + 1])) {
         gpio_put(LED_GPIO[LED_GPIO_SIZE - 1], 1);
@@ -114,29 +117,25 @@ struct report {
  **/
 void joy_mode() {
   if (tud_hid_ready()) {
-    // find the delta between previous and current enc_val
     for (int i = 0; i < ENC_GPIO_SIZE; i++) {
-      cur_enc_val[i] +=
-          ((ENC_REV[i] ? 1 : -1) * (enc_val[i] - prev_enc_val[i]));
+      cur_enc_val[i] += ((ENC_REV[i] ? 1 : -1) * (enc_val[i] - prev_enc_val[i]));
       while (cur_enc_val[i] < 0) cur_enc_val[i] = ENC_PULSE + cur_enc_val[i];
       cur_enc_val[i] %= ENC_PULSE;
-
       prev_enc_val[i] = enc_val[i];
     }
-
     report.joy0 = ((double)cur_enc_val[0] / ENC_PULSE) * (UINT8_MAX + 1);
     report.joy1 = ((double)cur_enc_val[1] / ENC_PULSE) * (UINT8_MAX + 1);
-
     tud_hid_n_report(0x00, REPORT_ID_JOYSTICK, &report, sizeof(report));
   }
 }
 
 /**
- * Keyboard Mode
+ * Keyboard Mode (Updated with Timer-based Hold)
  **/
 void key_mode() {
     if (tud_hid_ready()) {
         uint8_t nkro_report[32] = {0};
+        uint64_t now = time_us_64();
 
         // --- Handle Physical Buttons ---
         for (int i = 0; i < SW_GPIO_SIZE; i++) {
@@ -151,19 +150,26 @@ void key_mode() {
             }
         }
 
-        // --- Handle Encoders as Keys ---
+        // --- Handle Encoders as Keys with Hold Logic ---
+        
         // ENC 0 (X Axis) -> Maps to 'Q'
         if (enc_val[0] != prev_enc_val[0]) {
+            enc0_timeout = now + ENC_HOLD_TIME_US;
+            prev_enc_val[0] = enc_val[0];
+        }
+        if (now < enc0_timeout) {
             uint8_t q_key = HID_KEY_Q;
             nkro_report[(q_key / 8) + 1] |= (1 << (q_key % 8));
-            prev_enc_val[0] = enc_val[0]; // Update so it only "presses" during movement
         }
 
         // ENC 1 (Y Axis) -> Maps to 'O'
         if (enc_val[1] != prev_enc_val[1]) {
+            enc1_timeout = now + ENC_HOLD_TIME_US;
+            prev_enc_val[1] = enc_val[1];
+        }
+        if (now < enc1_timeout) {
             uint8_t o_key = HID_KEY_O;
             nkro_report[(o_key / 8) + 1] |= (1 << (o_key % 8));
-            prev_enc_val[1] = enc_val[1];
         }
 
         tud_hid_n_report(0x00, REPORT_ID_KEYBOARD, &nkro_report, sizeof(nkro_report));
@@ -171,21 +177,19 @@ void key_mode() {
 }
 
 /**
- * Updates input states and stores true state into report.buttons.
- * Note: Switches are pull up, negate value
+ * Updates input states
  **/
 void update_inputs() {
   report.buttons = 0;
   for (int i = SW_GPIO_SIZE - 1; i >= 0; i--) {
     sw_prev_raw_val[i] = !gpio_get(SW_GPIO[i]);
-
     report.buttons <<= 1;
     report.buttons |= sw_cooked_val[i];
   }
 }
 
 /**
- * DMA Encoder Logic For 2 Encoders
+ * DMA Encoder Logic
  **/
 void dma_handler() {
   uint i = 1;
@@ -196,8 +200,7 @@ void dma_handler() {
   }
   dma_hw->ints0 = 1u << interrupt_channel;
   if (interrupt_channel < 4) {
-    dma_channel_set_read_addr(interrupt_channel, &pio->rxf[interrupt_channel],
-                              true);
+    dma_channel_set_read_addr(interrupt_channel, &pio->rxf[interrupt_channel], true);
   }
 }
 
@@ -216,31 +219,21 @@ void core1_entry() {
  * Initialize Board Pins
  **/
 void init() {
-  // LED Pin on when connected
   gpio_init(25);
   gpio_set_dir(25, GPIO_OUT);
   gpio_put(25, 1);
 
-  // Set up the state machine for encoders
   pio = pio0;
   uint offset = pio_add_program(pio, &encoders_program);
 
-  // Setup Encoders
   for (int i = 0; i < ENC_GPIO_SIZE; i++) {
     enc_val[i] = prev_enc_val[i] = cur_enc_val[i] = 0;
     encoders_program_init(pio, i, offset, ENC_GPIO[i], ENC_DEBOUNCE);
-
     dma_channel_config c = dma_channel_get_default_config(i);
     channel_config_set_read_increment(&c, false);
     channel_config_set_write_increment(&c, false);
     channel_config_set_dreq(&c, pio_get_dreq(pio, i, false));
-
-    dma_channel_configure(i, &c,
-                          &enc_val[i],   // Destination pointer
-                          &pio->rxf[i],  // Source pointer
-                          0x10,          // Number of transfers
-                          true           // Start immediately
-    );
+    dma_channel_configure(i, &c, &enc_val[i], &pio->rxf[i], 0x10, true);
     irq_set_exclusive_handler(DMA_IRQ_0, dma_handler);
     irq_set_enabled(DMA_IRQ_0, true);
     dma_channel_set_irq0_enabled(i, true);
@@ -248,13 +241,10 @@ void init() {
 
   reactive_timeout_timestamp = time_us_64();
 
-  // Set up WS2812B
   pio_1 = pio1;
   uint offset2 = pio_add_program(pio_1, &ws2812_program);
-  ws2812_program_init(pio_1, ENC_GPIO_SIZE, offset2, WS2812B_GPIO, 800000,
-                      false);
+  ws2812_program_init(pio_1, ENC_GPIO_SIZE, offset2, WS2812B_GPIO, 800000, false);
 
-  // Setup Button GPIO
   for (int i = 0; i < SW_GPIO_SIZE; i++) {
     sw_prev_raw_val[i] = false;
     sw_cooked_val[i] = false;
@@ -265,16 +255,13 @@ void init() {
     gpio_pull_up(SW_GPIO[i]);
   }
 
-  // Setup LED GPIO
   for (int i = 0; i < LED_GPIO_SIZE; i++) {
     gpio_init(LED_GPIO[i]);
     gpio_set_dir(LED_GPIO[i], GPIO_OUT);
   }
 
-  // Set listener bools
   kbm_report = false;
 
-  // Joy/KB Mode Switching
   if (!gpio_get(SW_GPIO[0])) {
     loop_mode = &key_mode;
     joy_mode_check = false;
@@ -283,68 +270,43 @@ void init() {
     joy_mode_check = true;
   }
 
-  // RGB Mode Switching
   if (!gpio_get(SW_GPIO[1])) {
     ws2812b_mode = &turbocharger_color_cycle;
   } else {
     ws2812b_mode = &ws2812b_color_cycle;
   }
 
-  // Debouncing Mode
   debounce_mode = &debounce_eager;
 
-  // Disable RGB
   if (gpio_get(SW_GPIO[8])) {
     multicore_launch_core1(core1_entry);
   }
 }
 
-/**
- * Main Loop Function
- **/
 int main(void) {
   board_init();
   init();
   tusb_init();
 
   while (1) {
-    tud_task();  // tinyusb device task
+    tud_task();
     debounce_mode();
     update_inputs();
     loop_mode();
     update_lights();
   }
-
   return 0;
 }
 
-// Invoked when received GET_REPORT control request
-// Application must fill buffer report's content and return its length.
-// Return zero will cause the stack to STALL request
-uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id,
-                               hid_report_type_t report_type, uint8_t* buffer,
-                               uint16_t reqlen) {
-  // TODO not Implemented
-  (void)itf;
-  (void)report_id;
-  (void)report_type;
-  (void)buffer;
-  (void)reqlen;
-
+uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen) {
+  (void)itf; (void)report_id; (void)report_type; (void)buffer; (void)reqlen;
   return 0;
 }
 
-// Invoked when received SET_REPORT control request or
-// received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id,
-                           hid_report_type_t report_type, uint8_t const* buffer,
-                           uint16_t bufsize) {
+void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize) {
   (void)itf;
-  if (report_id == 2 && report_type == HID_REPORT_TYPE_OUTPUT &&
-      bufsize >= sizeof(lights_report))  // light data
-  {
-    size_t i = 0;
-    for (i; i < sizeof(lights_report); i++) {
+  if (report_id == 2 && report_type == HID_REPORT_TYPE_OUTPUT && bufsize >= sizeof(lights_report)) {
+    for (size_t i = 0; i < sizeof(lights_report); i++) {
       lights_report.raw[i] = buffer[i];
     }
     reactive_timeout_timestamp = time_us_64();
