@@ -135,39 +135,39 @@ void joy_mode() {
  * Keyboard Mode
  **/
 void key_mode() {
-  if (tud_hid_ready()) {  // Wait for ready, updating mouse too fast hampers
-                          // movement
-    if (kbm_report) {
-      /*------------- Keyboard -------------*/
-      uint8_t nkro_report[32] = {0};
-      for (int i = 0; i < SW_GPIO_SIZE; i++) {
-        if ((report.buttons >> i) % 2 == 1) {
-          uint8_t bit = SW_KEYCODE[i] % 8;
-          uint8_t byte = (SW_KEYCODE[i] / 8) + 1;
-          if (SW_KEYCODE[i] >= 240 && SW_KEYCODE[i] <= 247) {
-            nkro_report[0] |= (1 << bit);
-          } else if (byte > 0 && byte <= 31) {
-            nkro_report[byte] |= (1 << bit);
-          }
-        }
-      }
-      tud_hid_n_report(0x00, REPORT_ID_KEYBOARD, &nkro_report,
-                       sizeof(nkro_report));
-    } else {
-      /*------------- Mouse -------------*/
-      // find the delta between previous and current enc_val
-      int delta[ENC_GPIO_SIZE] = {0};
-      for (int i = 0; i < ENC_GPIO_SIZE; i++) {
-        delta[i] = (enc_val[i] - prev_enc_val[i]) * (ENC_REV[i] ? 1 : -1);
-        prev_enc_val[i] = enc_val[i];
-      }
+    if (tud_hid_ready()) {
+        uint8_t nkro_report[32] = {0};
 
-      tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, delta[0] * MOUSE_SENS,
-                           delta[1] * MOUSE_SENS, 0, 0);
+        // --- Handle Physical Buttons ---
+        for (int i = 0; i < SW_GPIO_SIZE; i++) {
+            if (sw_cooked_val[i]) {
+                uint8_t bit = SW_KEYCODE[i] % 8;
+                uint8_t byte = (SW_KEYCODE[i] / 8) + 1;
+                if (SW_KEYCODE[i] >= 240 && SW_KEYCODE[i] <= 247) {
+                    nkro_report[0] |= (1 << bit);
+                } else {
+                    nkro_report[byte] |= (1 << bit);
+                }
+            }
+        }
+
+        // --- Handle Encoders as Keys ---
+        // ENC 0 (X Axis) -> Maps to 'Q'
+        if (enc_val[0] != prev_enc_val[0]) {
+            uint8_t q_key = HID_KEY_Q;
+            nkro_report[(q_key / 8) + 1] |= (1 << (q_key % 8));
+            prev_enc_val[0] = enc_val[0]; // Update so it only "presses" during movement
+        }
+
+        // ENC 1 (Y Axis) -> Maps to 'O'
+        if (enc_val[1] != prev_enc_val[1]) {
+            uint8_t o_key = HID_KEY_O;
+            nkro_report[(o_key / 8) + 1] |= (1 << (o_key % 8));
+            prev_enc_val[1] = enc_val[1];
+        }
+
+        tud_hid_n_report(0x00, REPORT_ID_KEYBOARD, &nkro_report, sizeof(nkro_report));
     }
-    // Alternate reports
-    kbm_report = !kbm_report;
-  }
 }
 
 /**
