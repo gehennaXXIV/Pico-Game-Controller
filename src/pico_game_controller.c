@@ -280,7 +280,7 @@ void init() {
   debounce_mode = &debounce_eager;
 
   // Disable RGB
-  if (gpio_get(SW_GPIO[8])) {
+  if (gpio_get(SW_GPIO[6])) {
     multicore_launch_core1(core1_entry);
   }
 }
