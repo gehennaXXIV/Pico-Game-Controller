@@ -23,10 +23,10 @@
  **/
 
 /* ── tuneable constants ─────────────────────────────────────────── */
-#define GHN_CLAMP     0.10f
-#define GHN_THRESHOLD 0.05f
+#define GHN_CLAMP     0.05f
+#define GHN_THRESHOLD 0.025f
 #define GHN_DECAY     0.0005f
-#define GHN_VEL       0.15f   /* chase speed in LED-indices per frame  */
+#define GHN_VEL       0.075f   /* chase speed in LED-indices per frame  */
 #define GHN_FADE      40      /* idle frames before snap-back          */
 #define GHN_FADE_VEL  0.025f  /* brightness lost per idle frame        */
 
