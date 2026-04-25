@@ -23,10 +23,10 @@
  **/
 
 /* ── tuneable constants ─────────────────────────────────────────── */
-#define GHN_CLAMP     0.05f
-#define GHN_THRESHOLD 0.025f
+#define GHN_CLAMP     0.04f
+#define GHN_THRESHOLD 0.015f
 #define GHN_DECAY     0.0005f
-#define GHN_VEL       0.075f   /* chase speed in LED-indices per frame  */
+#define GHN_VEL       0.05f   /* chase speed in LED-indices per frame  */
 #define GHN_FADE      40      /* idle frames before snap-back          */
 #define GHN_FADE_VEL  0.025f  /* brightness lost per idle frame        */
 
@@ -169,12 +169,16 @@ void ghn(uint32_t counter) {
             ghn_iclamp(cur_b + r, 0, 255));  // ← blue = same as red for magenta
     }
 
-    /* --- always-on rainbow: LEDs 10-14 ---------------------------- */
-    for (int i = 0; i < GHN_RAINBOW_LEN; i++) {
-        /* spread hue evenly; counter scrolls it slowly */
+      /* LEDs 10-14: scrolling rainbow, dimmed to 40% */
+      #define RAINBOW_DIM 0.4f
+      for (int i = 0; i < GHN_RAINBOW_LEN; i++) {
         uint16_t hue = (uint16_t)((counter * 2 + i * (768 / GHN_RAINBOW_LEN)) % 768);
-        pixels[GHN_RAINBOW[i]] = ghn_wheel(hue);
-    }
+        uint32_t c = ghn_wheel(hue);
+        uint8_t r = (uint8_t)(((c >> 8)  & 0xFF) * RAINBOW_DIM);
+        uint8_t g = (uint8_t)(((c >> 16) & 0xFF) * RAINBOW_DIM);
+        uint8_t b = (uint8_t)( (c        & 0xFF) * RAINBOW_DIM);
+        pixels[GHN_RAINBOW[i]] = urgb_u32(r, g, b);
+      }
 
     /* --- button-reactive LEDs ------------------------------------- */
 
