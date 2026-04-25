@@ -271,9 +271,9 @@ void init() {
 
   // RGB Mode Switching
   if (!gpio_get(SW_GPIO[1])) {
-    ws2812b_mode = &turbocharger_color_cycle;
+      ws2812b_mode = &turbocharger_color_cycle;  // hold button 2 at boot
   } else {
-    ws2812b_mode = &ws2812b_color_cycle;
+      ws2812b_mode = &ghn;  // ← was &ws2812b_color_cycle
   }
 
   // Debouncing Mode
