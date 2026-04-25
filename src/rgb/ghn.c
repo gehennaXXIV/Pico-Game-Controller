@@ -159,14 +159,14 @@ void ghn(uint32_t counter) {
         float strength = ghn_spot(ghn_pos[1], (float)s) * ghn_brightness[1];
         int   led      = GHN_R_SEQ[s];
         uint8_t r = ghn_iclamp((int)(strength * 255), 0, 255);
-        uint8_t g = ghn_iclamp((int)(strength * 80),  0, 255); /* slight warmth */
+        uint8_t g = 0;
         uint8_t cur_r = (pixels[led] >> 8)  & 0xFF;
         uint8_t cur_g = (pixels[led] >> 16) & 0xFF;
         uint8_t cur_b =  pixels[led]        & 0xFF;
         pixels[led] = urgb_u32(
             ghn_iclamp(cur_r + r, 0, 255),
             ghn_iclamp(cur_g + g, 0, 255),
-            cur_b);
+            ghn_iclamp(cur_b + r, 0, 255));  // ← blue = same as red for magenta
     }
 
     /* --- always-on rainbow: LEDs 10-14 ---------------------------- */
