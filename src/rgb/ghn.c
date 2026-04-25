@@ -79,9 +79,9 @@ static inline uint32_t ghn_wheel(uint16_t wp) {
     else                return urgb_u32(wp-512,         0,  255-(wp-512));
 }
 
-/* spotlight strength: falls linearly to 0 at ±2 LED-indices away */
+/* spotlight strength: falls linearly to 0 at ±1 LED-index away */
 static inline float ghn_spot(float pos, float target) {
-    return ghn_fclamp(1.0f - ghn_fabs(pos - target) / 2.0f, 0.0f, 1.0f);
+    return ghn_fclamp(1.0f - ghn_fabs(pos - target), 0.0f, 1.0f);
 }
 
 /* ── main function ──────────────────────────────────────────────── */
@@ -113,12 +113,12 @@ void ghn(uint32_t counter) {
         if (ghn_cur_enc[i] < -GHN_THRESHOLD) {
             /* knob turning "left" direction */
             ghn_idle[i] = 0;
-            ghn_pos[i] += GHN_VEL;
+            ghn_pos[i] += (i == 1 ? -GHN_VEL : GHN_VEL);
             ghn_brightness[i] = 1.0f;
         } else if (ghn_cur_enc[i] > GHN_THRESHOLD) {
             /* knob turning "right" direction */
             ghn_idle[i] = 0;
-            ghn_pos[i] -= GHN_VEL;
+            ghn_pos[i] += (i == 1 ? GHN_VEL : -GHN_VEL);
             ghn_brightness[i] = 1.0f;
         } else {
             ghn_idle[i]++;
