@@ -1,8 +1,8 @@
 #ifndef CONTROLLER_CONFIG_H
 #define CONTROLLER_CONFIG_H
 
-#define SW_GPIO_SIZE 9                // Number of switches
-#define LED_GPIO_SIZE 1               // Number of switch LEDs
+#define SW_GPIO_SIZE 7                // Number of switches
+#define LED_GPIO_SIZE 0               // Number of switch LEDs
 #define ENC_GPIO_SIZE 2               // Number of encoders
 #define ENC_PPR 24                    // Encoder PPR
 #define MOUSE_SENS 5                  // Mouse sensitivity multiplier
@@ -10,8 +10,8 @@
 #define SW_DEBOUNCE_TIME_US 4000      // Switch debounce delay in us
 #define ENC_PULSE (ENC_PPR * 4)       // 4 pulses per PPR
 #define REACTIVE_TIMEOUT_MAX 1000000  // HID to reactive timeout in us
-#define WS2812B_LED_SIZE 10           // Number of WS2812B LEDs
-#define WS2812B_LED_ZONES 2           // Number of WS2812B LED Zones
+#define WS2812B_LED_SIZE 24           // Number of WS2812B LEDs
+#define WS2812B_LED_ZONES 1           // Number of WS2812B LED Zones
 #define WS2812B_LEDS_PER_ZONE \
   WS2812B_LED_SIZE / WS2812B_LED_ZONES  // Number of LEDs per zone
 
@@ -19,9 +19,9 @@
 
 // MODIFY KEYBINDS HERE, MAKE SURE LENGTHS MATCH SW_GPIO_SIZE
 const uint8_t SW_KEYCODE[] = {HID_KEY_D, HID_KEY_F, HID_KEY_J, HID_KEY_K,
-                              HID_KEY_C, HID_KEY_M, HID_KEY_A, HID_KEY_B, HID_KEY_1};
+                              HID_KEY_C, HID_KEY_M, HID_KEY_1};
 const uint8_t SW_GPIO[] = {
-    13, 11, 9, 7, 12, 8, 10, 27, 0,
+    13, 11, 10, 8, 12, 9, 26,
 };
 const uint8_t LED_GPIO[] = {
     2,
