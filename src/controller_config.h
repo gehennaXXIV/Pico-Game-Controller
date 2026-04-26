@@ -2,7 +2,7 @@
 #define CONTROLLER_CONFIG_H
 
 #define SW_GPIO_SIZE 7               // Number of switches
-#define LED_GPIO_SIZE 1              // Number of switch LEDs
+#define LED_GPIO_SIZE 0              // Number of switch LEDs
 #define ENC_GPIO_SIZE 2               // Number of encoders
 #define ENC_PPR 24                   // Encoder PPR
 #define MOUSE_SENS 5                  // Mouse sensitivity multiplier
@@ -17,7 +17,7 @@
 
 #ifdef PICO_GAME_CONTROLLER_C
 const uint8_t SW_KEYCODE[] = {HID_KEY_D, HID_KEY_F, HID_KEY_J, HID_KEY_K, HID_KEY_C, HID_KEY_M, HID_KEY_1};
-const uint8_t SW_GPIO[] = {13, 11, 10, 8, 12, 9, 26};
+const uint8_t SW_GPIO[] = {13, 11, 10, 8, 12, 9, 26}; // BTA, BTB, BTC, BTD, FXL, FXR, START
 const uint8_t LED_GPIO[] = {0};
 const uint8_t ENC_GPIO[] = {14, 6};      // L_ENC(0, 1); R_ENC(2, 3)
 const bool ENC_REV[] = {false, false};  // Reverse Encoders
